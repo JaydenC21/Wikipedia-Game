@@ -1,11 +1,9 @@
+from queue import Queue
 import wikipediaapi
 import time
 
 user_agent = "Wikipedia-Game (ch9597ja0331@pusd.us)"
 wiki = wikipediaapi.Wikipedia(user_agent, "en")
-
-startPage = wiki.page("Pasadena High School (California)")
-targetPage = wiki.page("Rose Parade")
 
 def fetchLinks(page):
     linksList = []
@@ -15,10 +13,40 @@ def fetchLinks(page):
     return linksList
 
 def wikipediaGameSolver(startPage, targetPage):
-    links = fetchLinks(startPage)
-    for link in links:
-        if link == targetPage.title:
-            print("Target acquired: " + link)
+    print("Searching...")
+    startTime = time.time()
+
+    queue = Queue()
+    visited = set()
+    parent = {}
+
+    queue.put(startPage.title)
+    visited.add(startPage.title)
+    while not queue.empty():
+        currentPageTitle = queue.get()
+        if currentPageTitle == targetPage.title:
             break
 
-wikipediaGameSolver(startPage, targetPage)
+        currentPage = wiki.page(currentPageTitle)
+        links = fetchLinks(currentPage)
+        for link in links:
+            if link not in visited:
+                queue.put(link)
+                visited.add(link)
+                parent[link] = currentPageTitle
+    path = []
+    pageTitle = targetPage.title
+    while pageTitle != startPage.title:
+        path.append(pageTitle)
+        pageTitle = parent[pageTitle]
+    
+    path.append(startPage.title)
+    path.reverse()
+    endTime = time.time()
+    print("Solved in ", endTime - startTime, " seconds.")
+    return path
+
+startPage = wiki.page("Pasadena High School (California)")
+targetPage = wiki.page("World War II")
+path = wikipediaGameSolver(startPage, targetPage)
+print(path)
